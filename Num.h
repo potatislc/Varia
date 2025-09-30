@@ -17,6 +17,9 @@ namespace varia::internal_type {
     template<typename T>
     concept ArithmeticNotBool = Arithmetic<T> && !std::same_as<Bool, T>;
 
+    template<typename T>
+    concept IntegralOrBool = std::integral<T> || std::same_as<Bool, T>;
+
     class Num {
     public:
         Num() = default;
@@ -44,14 +47,9 @@ namespace varia::internal_type {
             return static_cast<T>(std::get<FallbackT>(mValue));
         }
 
-        template<std::integral T>
+        template<Arithmetic T>
         explicit operator T() const {
-            return static_cast<T>(as_alternative<Int>());
-        }
-
-        template<std::floating_point T>
-        explicit operator T() const {
-            return static_cast<T>(as_alternative<Float>());
+            return static_cast<T>(as_alternative<std::conditional_t<IntegralOrBool<T>, Int, Float>>());
         }
 
         Num operator+(const NumAlternative auto value) {
