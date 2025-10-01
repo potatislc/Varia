@@ -82,9 +82,9 @@ namespace varia::internal_type {
         }
 
         // Creates random ambiguous constructor error for var<internal_type::Bool>?!
-        /*Num operator%(const Float value) const {
+        Num operator%(const Float value) const {
             return Num{std::fmod(as_alternative<Float>(), value)};
-        }*/
+        }
 
     private:
         std::variant<Int, Float> mValue; // Eventually include BigInt and LongDouble

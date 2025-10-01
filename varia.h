@@ -3,12 +3,16 @@
 #include <memory>
 #include <type_traits>
 #include <concepts>
+#include <iostream>
 
 #include "Num.h"
 
 namespace varia {
     template<typename T>
     concept VarConstraint = !std::same_as<void, T> && std::same_as<T, std::decay_t<T>>;
+
+    template<typename T>
+    concept StringConstructible = std::is_constructible_v<std::string, T>;
 
     template<VarConstraint T>
     class var;
@@ -30,80 +34,66 @@ namespace varia {
 
     template<VarConstraint T>
     class var {
-        // Exclude bools from this?
-        static constexpr bool is_arithmetic{internal_type::Arithmetic<T>};
-
-        static constexpr bool is_primitive{internal_type::Primitive<T> /* include math vectors here some day? */};
-
-        // var<internal_type::String> has special overloads
-        static constexpr bool is_string{std::same_as<T, internal_type::String>};
-
-        using Storage = std::conditional_t<is_primitive, T, std::shared_ptr<T>>;
-
-    public:
         using ValueType = T;
 
-        var() requires is_primitive = default;
+        class PrimitiveContainer {
+        public:
+            explicit PrimitiveContainer(const T& value) : mValue{value} {}
 
-        var(const internal_type::Bool value) requires std::same_as<internal_type::Bool, T> : mValue{value} {}
-
-        template<internal_type::ArithmeticNotBool U>
-        var(const U value) : mValue{value} {}
-
-        var(const internal_type::NonArithmeticPrimitive auto value) : mValue{value} {}
-
-        var() requires (!is_primitive) : mValue{std::make_shared<T>()} {}
-
-        var(const T& t) requires (!is_primitive) : mValue{std::make_shared<T>(t)} {}
-
-        var(T&& t) requires (!is_primitive) : mValue{std::make_shared<T>(std::move(t))} {}
-
-        // Forwarding constructor for types convertible to T
-        template<typename U>
-        requires (!internal_type::Primitive<T> && std::constructible_from<T, U&&>)
-        var(U&& u) : mValue{std::make_shared<T>(std::forward<U>(u))} {}
-
-        T* operator->() {
-            return &get();
-        }
-
-        const T* operator->() const {
-            return &get();
-        }
-
-        // Too permissive? Even implicitly downcasts during braced initialization
-        template<internal_type::ArithmeticNotNum U>
-        operator U() const requires internal_type::Arithmetic<T> {
-            return static_cast<U>(mValue);
-        }
-
-        operator T() const {
-            return get();
-        }
-
-        operator const std::string&() const requires is_string {
-            return get();
-        }
-
-        friend Num operator+(const Num& lhs, const Num& rhs);
-
-        friend String operator+(const String& lhs, const String& rhs);
-        friend String& operator+=(String& lhs, const String& rhs);
-    private:
-        [[nodiscard]] T& get() {
-            if constexpr (is_primitive) {
+            [[nodiscard]] const T& operator*() const {
                 return mValue;
             }
 
+            [[nodiscard]] T& operator*() {
+                return mValue;
+            }
+
+        private:
+            T mValue{};
+        };
+
+        using Storage = std::conditional_t<internal_type::Primitive<T>, PrimitiveContainer, std::shared_ptr<T>>;
+
+    public:
+        // Intentionally Implicit
+
+        var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T>): mValue{make(value)} {}
+
+        template<internal_type::ArithmeticNotBool U>
+        var(const U value) : mValue{internal_type::Num{value}} {}
+
+        template<StringConstructible U>
+        var(const U& value) : mValue{make(value)} {}
+
+        template<internal_type::Arithmetic U>
+        operator U() const {
+            return static_cast<U>(*mValue);
+        }
+
+        operator T() const {
             return *mValue;
         }
 
-        [[nodiscard]] const T& get() const requires (is_primitive){
-            return mValue;
+        const T* operator->() const {
+            return &*mValue;
         }
 
-        [[nodiscard]] const T& get() const requires (!is_primitive){
-            return *mValue;
+        T* operator->() {
+            return &*mValue;
+        }
+
+        // Special overloads
+
+        friend String operator+(const String& lhs, const String& rhs);
+        friend Num operator+(Num lhs, Num rhs);
+
+    private:
+        auto make(const T& value) const {
+            if constexpr (internal_type::Primitive<T>) {
+                return value;
+            } else {
+                return std::make_shared<T>();
+            }
         }
 
         Storage mValue{};
@@ -111,30 +101,22 @@ namespace varia {
 
     // Deduction guides
 
-    template<typename T>
-    var(T) -> var<std::decay_t<T>>;
-
     var(internal_type::ArithmeticNotBool auto) -> var<internal_type::Num>;
 
-    // var(internal_type::Num) -> var<internal_type::Num>;
+    template<StringConstructible T>
+    var(T) -> var<internal_type::String>;
 
-    template <std::size_t N>
-    var(const char(&)[N]) -> var<internal_type::String>;
-    var(const char*) -> var<internal_type::String>;
-    var(std::string_view) -> var<internal_type::String>;
+    // Special overloads
 
-    inline Num operator+(const Num& lhs, const Num& rhs) {
-        return lhs.get() + rhs.get();
+    inline Num operator+(const Num lhs, const Num rhs) {
+        return *lhs.mValue + *rhs.mValue;
     }
 
     inline String operator+(const String& lhs, const String& rhs) {
-        return lhs.get() + rhs.get();
+        return *lhs.mValue + *rhs.mValue;
     }
 
-    inline String& operator+=(String& lhs, const String& rhs) {
-        lhs.get() += rhs.get();
-        return lhs;
-    }
+    // Sicko Mode Zone
 
     template<typename T>
     concept func = std::is_constructible_v<var<T>> || std::same_as<void, T>;
