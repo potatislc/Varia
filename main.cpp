@@ -9,7 +9,7 @@ int main() {
     d->shrink_to_fit();
 
     var x = 35678.3546785;
-    var y = 5;
+    var y = 6 + x + 7;
     var z = x + y;
 
     var h = "Hello, ";

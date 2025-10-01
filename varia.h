@@ -60,7 +60,7 @@ namespace varia {
         var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T>): mValue{make(value)} {}
 
         template<internal_type::ArithmeticNotBool U>
-        var(const U value) : mValue{internal_type::Num{value}} {}
+        var(const U& value) : mValue{internal_type::Num{value}} {}
 
         template<StringConstructible U>
         var(const U& value) : mValue{make(value)} {}
@@ -84,8 +84,9 @@ namespace varia {
 
         // Special overloads
 
+        friend Num operator+(const Num& lhs, const Num& rhs);
+
         friend String operator+(const String& lhs, const String& rhs);
-        friend Num operator+(Num lhs, Num rhs);
 
     private:
         auto make(const T& value) const {
@@ -109,8 +110,16 @@ namespace varia {
 
     // Special overloads
 
-    inline Num operator+(const Num lhs, const Num rhs) {
+    inline Num operator+(const Num& lhs, const Num& rhs) {
         return *lhs.mValue + *rhs.mValue;
+    }
+
+    Num operator+(const Num& lhs, internal_type::ArithmeticNotBool auto rhs) {
+        return lhs + Num{rhs};
+    }
+
+    Num operator+(internal_type::ArithmeticNotBool auto lhs, const Num& rhs) {
+        return Num{lhs} + rhs;
     }
 
     inline String operator+(const String& lhs, const String& rhs) {
