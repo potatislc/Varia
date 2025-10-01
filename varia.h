@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <concepts>
 
-#include "internal_type.h"
 #include "Num.h"
 
 namespace varia {
@@ -34,7 +33,7 @@ namespace varia {
         // Exclude bools from this?
         static constexpr bool is_arithmetic{std::is_arithmetic_v<T> || std::same_as<internal_type::Num, T>};
 
-        static constexpr bool is_primitive{is_arithmetic /* include math vectors here some day? */};
+        static constexpr bool is_primitive{internal_type::Primitive<T> /* include math vectors here some day? */};
 
         // var<internal_type::String> has special overloads
         static constexpr bool is_string{std::same_as<T, internal_type::String>};
@@ -51,6 +50,8 @@ namespace varia {
         template<internal_type::ArithmeticNotBool U>
         var(const U value) : mValue{value} {}
 
+        var(const internal_type::NonArithmeticPrimitive auto value) : mValue{value} {}
+
         var() requires (!is_primitive) : mValue{std::make_shared<T>()} {}
 
         var(const T& t) requires (!is_primitive) : mValue{std::make_shared<T>(t)} {}
@@ -59,7 +60,7 @@ namespace varia {
 
         // Forwarding constructor for types convertible to T
         template<typename U>
-        requires (!internal_type::Arithmetic<T> && std::constructible_from<T, U&&>)
+        requires (!internal_type::Primitive<T> && std::constructible_from<T, U&&>)
         var(U&& u) : mValue{std::make_shared<T>(std::forward<U>(u))} {}
 
         T* operator->() {

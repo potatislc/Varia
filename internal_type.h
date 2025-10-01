@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "internal_arithmetic_type.h"
-#include "Num.h"
 
 namespace varia::internal_type {
     using String = std::string;
