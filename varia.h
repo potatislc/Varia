@@ -92,7 +92,7 @@ namespace varia {
             if constexpr (internal_type::Primitive<T>) {
                 return value;
             } else {
-                return std::make_shared<T>();
+                return std::make_shared<T>(value);
             }
         }
 
@@ -101,7 +101,8 @@ namespace varia {
 
     // Deduction guides
 
-    var(internal_type::ArithmeticNotBool auto) -> var<internal_type::Num>;
+    template<internal_type::ArithmeticNotBool T>
+    var(T) -> var<internal_type::Num>;
 
     template<StringConstructible T>
     var(T) -> var<internal_type::String>;
