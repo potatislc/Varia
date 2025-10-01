@@ -31,7 +31,7 @@ namespace varia {
     template<VarConstraint T>
     class var {
         // Exclude bools from this?
-        static constexpr bool is_arithmetic{std::is_arithmetic_v<T> || std::same_as<internal_type::Num, T>};
+        static constexpr bool is_arithmetic{internal_type::Arithmetic<T>};
 
         static constexpr bool is_primitive{internal_type::Primitive<T> /* include math vectors here some day? */};
 
@@ -72,18 +72,23 @@ namespace varia {
         }
 
         // Too permissive? Even implicitly downcasts during braced initialization
-        template<typename U>
+        template<internal_type::ArithmeticNotNum U>
         operator U() const requires internal_type::Arithmetic<T> {
             return static_cast<U>(mValue);
+        }
+
+        operator T() const {
+            return get();
         }
 
         operator const std::string&() const requires is_string {
             return get();
         }
 
+        friend Num operator+(const Num& lhs, const Num& rhs);
+
         friend String operator+(const String& lhs, const String& rhs);
         friend String& operator+=(String& lhs, const String& rhs);
-
     private:
         [[nodiscard]] T& get() {
             if constexpr (is_primitive) {
@@ -93,11 +98,11 @@ namespace varia {
             return *mValue;
         }
 
-        [[nodiscard]] const T& get() const {
-            if constexpr (is_primitive) {
-                return mValue;
-            }
+        [[nodiscard]] const T& get() const requires (is_primitive){
+            return mValue;
+        }
 
+        [[nodiscard]] const T& get() const requires (!is_primitive){
             return *mValue;
         }
 
@@ -117,6 +122,10 @@ namespace varia {
     var(const char(&)[N]) -> var<internal_type::String>;
     var(const char*) -> var<internal_type::String>;
     var(std::string_view) -> var<internal_type::String>;
+
+    inline Num operator+(const Num& lhs, const Num& rhs) {
+        return lhs.get() + rhs.get();
+    }
 
     inline String operator+(const String& lhs, const String& rhs) {
         return lhs.get() + rhs.get();

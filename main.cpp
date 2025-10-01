@@ -17,6 +17,7 @@ varia_func generic_add2(auto a, auto b) {
 int main() {
     var a = 6;
     var a1 = 6.;
+    a = a + a1;
     uint16_t hej = a1;
     var b = false;
 

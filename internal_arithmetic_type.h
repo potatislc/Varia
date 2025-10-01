@@ -6,4 +6,5 @@ namespace varia::internal_type {
     // Default to 64bit counterparts to conform with Python and lua
     using Int = int64_t;
     using Float = double;
+    class Num;
 }
