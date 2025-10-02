@@ -4,19 +4,22 @@
 #include "Num.h"
 
 namespace varia::internal_type {
-    // Primitive: std::is_arithmetic<T> || std::same_as<internal_type::Num, T>
-    // PrimitiveRefObject: internal_type::String
-    // RefObject: Allt annat
-    struct PrimitiveObject {}; // Copied
-    struct PrimitiveRefObject {}; // Immutable ref
-    struct RefObject {}; // Ref
+    struct CopiedType {};
+    struct ImmutableRefType {};
+    struct [[maybe_unused]] MutableRefType {};
 
-    struct None : PrimitiveObject {};
+    struct None : CopiedType {};
 
     template<typename T>
-    concept Primitive = std::is_arithmetic_v<T> || std::is_base_of_v<PrimitiveObject, T>;
+    concept Copied = std::is_fundamental_v<T> || std::is_base_of_v<CopiedType, T>;
 
     template<typename T>
-    concept PrimitiveRef = std::same_as<String, T> || std::is_base_of_v<PrimitiveRefObject, T>;
+    concept ImmutableRef = std::same_as<String, T> || std::is_base_of_v<ImmutableRefType, T>;
+
+    template<typename T>
+    concept MutableRef = (!Copied<T> && !ImmutableRef<T>) || std::is_base_of_v<MutableRefType, T>;
+
+    template<typename T>
+    concept Referenced = ImmutableRef<T> || MutableRef<T>;
 }
 

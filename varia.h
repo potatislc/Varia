@@ -17,6 +17,15 @@ namespace varia {
     template<VarConstraint T>
     class var;
 
+    template<typename>
+    struct is_var : std::false_type {};
+
+    template<VarConstraint T>
+    struct is_var<var<T>> : std::true_type {};
+
+    template<typename T>
+    concept Var = is_var<T>::value;
+
     // Typedefs for a simple subset of relevant types. Used for user declared functions with vars as parameters
     using None = var<internal_type::None>;
     using Void = void; // Conform with varia naming convention (maybe used as function return type)
@@ -40,6 +49,7 @@ namespace varia {
         class PrimitiveContainer {
         public:
             PrimitiveContainer() = default;
+
             explicit PrimitiveContainer(const T& value) : mValue{value} {}
 
             [[nodiscard]] const T& operator*() const {
@@ -50,16 +60,26 @@ namespace varia {
                 return mValue;
             }
 
+            [[nodiscard]] const T* operator->() const {
+                return &mValue;
+            }
+
+            [[nodiscard]] T* operator->() {
+                return &mValue;
+            }
+
         private:
             T mValue{};
         };
 
-        using Storage = std::conditional_t<internal_type::Primitive<T>, PrimitiveContainer, std::shared_ptr<T>>;
+        using Storage = std::conditional_t<internal_type::Copied<T>, PrimitiveContainer, std::shared_ptr<T>>;
 
     public:
         // Intentionally Implicit
 
         var() = default;
+
+        var([[maybe_unused]] const internal_type::None /*unused*/) {}
 
         var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T>): mValue{make(value)} {}
 
@@ -88,13 +108,17 @@ namespace varia {
 
         // Special overloads
 
+        friend bool is_none(const Num& v);
+
+        friend bool is_none(const internal_type::Referenced auto& v);
+
         friend Num operator+(const Num& lhs, const Num& rhs);
 
         friend String operator+(const String& lhs, const String& rhs);
 
     private:
         static auto make(const T& value) {
-            if constexpr (internal_type::Primitive<T>) {
+            if constexpr (internal_type::Copied<T>) {
                 return value;
             } else {
                 return std::make_shared<T>(value);
@@ -112,7 +136,23 @@ namespace varia {
     template<StringConstructible T>
     var(T) -> var<internal_type::String>;
 
+    inline bool is_none([[maybe_unused]] const None /*unused*/) {
+        return true;
+    }
+
+    inline bool is_none(const Num& v) {
+        return v.mValue->is_alternative<internal_type::None>();
+    }
+
+    static bool is_none(const internal_type::Referenced auto& v) {
+        return v.mValue == nullptr;
+    }
+
     // Special overloads
+
+    /*inline bool operator==(const None rhs) {
+
+    }*/
 
     inline Num operator+(const Num& lhs, const Num& rhs) {
         return *lhs.mValue + *rhs.mValue;
