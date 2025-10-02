@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "internal_arithmetic_type.h"
+#include "internal_primitive_type.h"
 
 namespace varia::internal_type {
     using String = std::string;

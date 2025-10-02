@@ -11,6 +11,8 @@ namespace varia::internal_type {
     struct PrimitiveRefObject {}; // Immutable ref
     struct RefObject {}; // Ref
 
+    struct None : PrimitiveObject {};
+
     template<typename T>
     concept Primitive = std::is_arithmetic_v<T> || std::is_base_of_v<PrimitiveObject, T>;
 

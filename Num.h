@@ -9,7 +9,10 @@ namespace varia::internal_type {
     class Num;
 
     template<typename T>
-    concept NumAlternative = std::same_as<Int, T> || std::same_as<Float, T>;
+    concept NumConstructible = std::is_arithmetic_v<T> || std::same_as<None, T>;
+
+    template<typename T>
+    concept NumAlternative = std::same_as<None, T> || std::same_as<Int, T> || std::same_as<Float, T>;
 
     template<typename T>
     concept Arithmetic = std::is_arithmetic_v<T> || std::same_as<Num, T>;
@@ -29,18 +32,17 @@ namespace varia::internal_type {
     class Num : PrimitiveObject {
     public:
         enum class Type : uint8_t {
+            None,
             Int,
             Float
         };
 
         Num() = default;
 
-        explicit Num(const std::integral auto value) : mValue{static_cast<Int>(value)} {}
+        explicit Num(const NumConstructible auto& value) : mValue{make(value)} {}
 
-        explicit Num(const std::floating_point auto value) : mValue{static_cast<Float>(value)} {}
-
-        constexpr Num& operator=(const NumAlternative auto value) {
-            mValue = value;
+        constexpr Num& operator=(const NumConstructible auto value) {
+            mValue = make(value);
             return *this;
         }
 
@@ -87,6 +89,18 @@ namespace varia::internal_type {
         }
 
     private:
-        std::variant<Int, Float> mValue; // Eventually include BigInt and LongDouble
+        static Int make(const std::integral auto value) {
+            return static_cast<Int>(value);
+        }
+
+        static Float make(const std::floating_point auto value) {
+            return static_cast<Float>(value);
+        }
+
+        static None make(const None value) {
+            return value;
+        }
+
+        std::variant<None, Int, Float> mValue; // Eventually include BigInt and LongDouble
     };
 }

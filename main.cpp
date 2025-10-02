@@ -7,6 +7,8 @@ int main() {
     var c = false;
     var d = " Hej";
     d->shrink_to_fit();
+    var e = None();
+
 
     var x = 35678.3546785;
     var y = 6 + x + 7;

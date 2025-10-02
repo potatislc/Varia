@@ -18,6 +18,7 @@ namespace varia {
     class var;
 
     // Typedefs for a simple subset of relevant types. Used for user declared functions with vars as parameters
+    using None = var<internal_type::None>;
     using Void = void; // Conform with varia naming convention (maybe used as function return type)
     using Bool = var<internal_type::Bool>;
     using Int = var<internal_type::Int>;
@@ -38,6 +39,7 @@ namespace varia {
 
         class PrimitiveContainer {
         public:
+            PrimitiveContainer() = default;
             explicit PrimitiveContainer(const T& value) : mValue{value} {}
 
             [[nodiscard]] const T& operator*() const {
@@ -56,6 +58,8 @@ namespace varia {
 
     public:
         // Intentionally Implicit
+
+        var() = default;
 
         var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T>): mValue{make(value)} {}
 
@@ -89,7 +93,7 @@ namespace varia {
         friend String operator+(const String& lhs, const String& rhs);
 
     private:
-        auto make(const T& value) const {
+        static auto make(const T& value) {
             if constexpr (internal_type::Primitive<T>) {
                 return value;
             } else {
