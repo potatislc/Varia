@@ -27,7 +27,7 @@ namespace varia {
     concept Var = is_var<T>::value;
 
     // Typedefs for a simple subset of relevant types. Used for user declared functions with vars as parameters
-    using None = var<internal_type::None>;
+    using NoneType = var<internal_type::None>;
     using Void = void; // Conform with varia naming convention (maybe used as function return type)
     using Bool = var<internal_type::Bool>;
     using Int = var<internal_type::Int>;
@@ -136,7 +136,11 @@ namespace varia {
     template<StringConstructible T>
     var(T) -> var<internal_type::String>;
 
-    inline bool is_none([[maybe_unused]] const None /*unused*/) {
+    inline constexpr NoneType None{}; // Varia equivalent to nullptr
+
+    // Special overloads
+
+    inline bool is_none([[maybe_unused]] const NoneType /*unused*/) {
         return true;
     }
 
@@ -148,11 +152,9 @@ namespace varia {
         return v.mValue == nullptr;
     }
 
-    // Special overloads
-
-    /*inline bool operator==(const None rhs) {
-
-    }*/
+    bool operator==(const Var auto& lhs, [[maybe_unused]] const NoneType /*unused*/) {
+        return is_none(lhs);
+    }
 
     inline Num operator+(const Num& lhs, const Num& rhs) {
         return *lhs.mValue + *rhs.mValue;
