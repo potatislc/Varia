@@ -4,6 +4,7 @@
 #include "Num.h"
 
 namespace varia::internal_type {
+    struct IncompatibleType{}; // Cannot construct a var with this T
     struct CopiedType {};
     struct ImmutableRefType {};
     struct [[maybe_unused]] MutableRefType {};

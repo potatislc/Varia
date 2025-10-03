@@ -9,7 +9,7 @@
 
 namespace varia {
     template<typename T>
-    concept VarConstraint = !std::same_as<void, T> && std::same_as<T, std::decay_t<T>>;
+    concept VarConstraint = !std::same_as<void, T> && !std::is_base_of_v<internal_type::IncompatibleType, T> && std::same_as<T, std::decay_t<T>>;
 
     template<typename T>
     concept StringConstructible = std::is_constructible_v<std::string, T>;
