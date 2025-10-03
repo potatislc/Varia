@@ -46,11 +46,16 @@ namespace varia {
     class var {
         using ValueType = T;
 
-        class PrimitiveContainer {
+        class CopiedContainer {
         public:
-            PrimitiveContainer() = default;
+            CopiedContainer() = default;
 
-            explicit PrimitiveContainer(const T& value) : mValue{value} {}
+            explicit CopiedContainer(const T& value) : mValue{value} {}
+
+            void reset() {
+                mValue.~T();
+                mValue = {};
+            }
 
             [[nodiscard]] const T& operator*() const {
                 return mValue;
@@ -72,7 +77,7 @@ namespace varia {
             T mValue{};
         };
 
-        using Storage = std::conditional_t<internal_type::Copied<T>, PrimitiveContainer, std::shared_ptr<T>>;
+        using Storage = std::conditional_t<internal_type::Copied<T>, CopiedContainer, std::shared_ptr<T>>;
 
     public:
         // Intentionally Implicit
@@ -108,6 +113,11 @@ namespace varia {
 
         // Special overloads
 
+        var& operator=([[maybe_unused]] const None /*unused*/) {
+            mValue.reset();
+            return *this;
+        }
+
         friend bool is_none(const Num& v);
 
         friend bool is_none(const internal_type::Referenced auto& v);
@@ -136,7 +146,7 @@ namespace varia {
     template<StringConstructible T>
     var(T) -> var<internal_type::String>;
 
-    inline constexpr None none{}; // Varia equivalent to nullptr
+    [[maybe_unused]] inline constexpr None none{}; // Varia equivalent to nullptr
 
     // Special overloads
 
