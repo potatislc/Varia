@@ -3,11 +3,14 @@
 
 int main() {
     var a = 34;
+    a = 7;
     var c = false;
-    c = none;
+    c = true;
     var d = " Hej";
+    d = "Nej";
     d->shrink_to_fit();
     var e = none;
+    e = none;
 
     var x = 35678.3546785;
     var y = 6 + x + 7;

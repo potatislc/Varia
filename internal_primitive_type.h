@@ -3,7 +3,7 @@
 
 namespace varia::internal_type {
     struct None;
-    using Bool = bool;
+    class Bool;
     // Default to 64bit counterparts to conform with Python and lua
     using Int = int64_t;
     using Float = double;

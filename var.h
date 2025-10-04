@@ -5,6 +5,7 @@
 #include <concepts>
 #include <iostream>
 
+#include "Bool.h"
 #include "Num.h"
 
 namespace varia {
@@ -80,13 +81,13 @@ namespace varia {
         using Storage = std::conditional_t<internal_type::Copied<T>, CopiedContainer, std::shared_ptr<T>>;
 
     public:
-        // Intentionally Implicit
-
         var() = default;
 
-        var([[maybe_unused]] const internal_type::None /*unused*/) {}
+        // Intentionally Implicit
 
-        var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T>): mValue{make(value)} {}
+        var(const bool value) : mValue{internal_type::Bool{value}} {}
+
+        var(const T& value) requires (!internal_type::ArithmeticNotBool<T> && !StringConstructible<T> && !std::same_as<internal_type::None, T>) : mValue{make(value)} {}
 
         template<internal_type::ArithmeticNotBool U>
         var(const U& value) : mValue{internal_type::Num{value}} {}
@@ -94,8 +95,13 @@ namespace varia {
         template<StringConstructible U>
         var(const U& value) : mValue{make(value)} {}
 
+        var& operator=([[maybe_unused]] const internal_type::None /*unused*/) {
+            mValue.reset();
+            return *this;
+        }
+
         template<internal_type::Arithmetic U>
-        operator U() const {
+        operator U() const requires internal_type::Arithmetic<T> {
             return static_cast<U>(*mValue);
         }
 
@@ -112,11 +118,6 @@ namespace varia {
         }
 
         // Special overloads
-
-        var& operator=([[maybe_unused]] const None /*unused*/) {
-            mValue.reset();
-            return *this;
-        }
 
         friend bool is_none(const Num& v);
 
@@ -139,6 +140,8 @@ namespace varia {
     };
 
     // Deduction guides
+
+    var(bool) -> var<internal_type::Bool>;
 
     template<internal_type::ArithmeticNotBool T>
     var(T) -> var<internal_type::Num>;

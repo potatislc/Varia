@@ -1,9 +1,8 @@
 #pragma once
 #include <type_traits>
 #include <variant>
-#include <cmath>
 
-#include "internal_type_hirearchy.h"
+#include "None.h"
 
 namespace varia::internal_type {
     class Num;
@@ -13,21 +12,6 @@ namespace varia::internal_type {
 
     template<typename T>
     concept NumAlternative = std::same_as<None, T> || std::same_as<Int, T> || std::same_as<Float, T>;
-
-    template<typename T>
-    concept Arithmetic = std::is_arithmetic_v<T> || std::same_as<Num, T>;
-
-    template<typename T>
-    concept NonArithmeticPrimitive = std::is_base_of_v<CopiedType, T> && !Arithmetic<T>;
-
-    template<typename T>
-    concept ArithmeticNotBool = Arithmetic<T> && !std::same_as<Bool, T>;
-
-    template<typename T>
-    concept ArithmeticNotNum = std::is_arithmetic_v<T>;
-
-    template<typename T>
-    concept IntegralOrBool = std::integral<T> || std::same_as<Bool, T>;
 
     class Num : CopiedType {
     public:
